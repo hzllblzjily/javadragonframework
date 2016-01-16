@@ -1,0 +1,89 @@
+@CHARSET "UTF-8";
+/***--ENTERAUTHLIST--***/
+.be-back{
+	font-size:1.125rem;
+}
+.be-back:hover{
+	cursor:pointer;
+}
+.arrowLeft{
+	font-size:1.875rem;
+	line-height: 1.875rem;
+	color: #8a8a8a;
+	font-weight: 100;
+}
+.back-to-before{
+	position:relative;
+	top:-0.1rem;
+	margin-left:0.25rem;
+}
+.panel .panel-header .panel-title{
+	top: -2px;
+	left: 6px;
+}
+.color-bdbdbd{
+	color: #bdbdbd;
+}
+/* ---CHECKBOX--- */
+.check{
+	font-size:1.875rem;
+	line-height: 1.875rem;
+	color: #8a8a8a;
+	font-weight: 100;	
+}
+.checked{
+	font-size:1.875rem;
+	line-height: 1.875rem;
+	font-weight: 100;	
+}
+.check:hover,.checked:hover{
+	cursor: pointer;
+}
+
+.panel .panel-body .row{
+	padding: 1.875rem;
+}
+.panel .panel-body .row h4{
+	margin-left: 4px;
+}
+
+.authority ~ .check{
+	display: inline-block;
+}
+.authority ~ .checked{
+	display: none;
+}
+.authority:checked ~ .check{
+	display: none;
+}
+.authority:checked ~ .checked{
+	display: inline-block;
+}
+/* PANEL-FOOTER */
+.panel .panel-footer{
+	padding-top: 1.25rem;
+	padding-bottom: 1.25rem;
+}
+.panel .panel-footer .btn-save{
+	padding-left: 1.375rem;
+	padding-right: 1.375rem;
+	color:#fff;
+	font-size: 0.875rem;
+	line-height: 1rem;
+}
+.panel .panel-footer .cancel{
+	margin-left: 0.875rem;
+}
+.cancel{
+	color: #999;
+	font-size: 0.875rem;
+}
+a.cancel:link,
+a.cancel:visited,
+a.cancel:hover,
+a.cancel:active{
+	cursor: pointer;
+	color: #999;
+}
+
+

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>测试页面</title>
+</head>
+<body>
+<p align="center" style="margin:0">111111</p>
+<hr/>
+<p style="margin:0">2222222</p>
+			<img style="width:200px;height:200px" src="/home/files/download?id=86"/>
+			<img style="width:200px;height:200px" src="http://cimbucket.oss-cn-qingdao.aliyuncs.com/592c1d029d9344d683f80b86fb1e041b.png"/>
+			<button id="add" type="button">add</button>
+			<button id="delete" type="button">delete</button>
+			<button id="update" type="button">update</button>
+			<button id="updateAuth" type="button">updateAuth</button>
+			<form enctype="multipart/form-data" method="POST"  action = "/home/files/upload">  
+			  用户头像:  <br>
+			  <input name="usage" type="hidden" value="avatar"/>
+			  <input name="cordX" type="hidden" value="100"/>
+			  <input name="cordY" type="hidden" value="100"/>
+			  <input name="cordWidth" type="hidden" value="200"/>
+			  <input name="cordHeight" type="hidden" value="200"/>
+			  <input name="adjustWidth11" type="hidden" value="500"/>
+			  <input type="file" name="image">
+			  <input type="submit" value="注册"><br>  
+			</form>  
+			
+
+			<form  method="POST"  action = "/home/users/register">  
+			  注册用户 <br>
+			  username<input id="id" name="userName" type="text" value="1" size="20"/><br>
+			  password<input id="name" name="password" id="name" type="text" value="dsfsfsf" size="20"/><br>
+			  email<input id="downloadLink"  name="email" id="downloadLink" type="text" value="123456" size="20"/><br>
+			
+			  <input type="submit" value="注册"><br>  
+			</form>  
+			
+			
+			<form enctype="multipart/form-data" method="POST"  action = "/files/upload">  
+
+			  <input type="file" name="image">
+			  <input type="submit" value="上传文件"><br>  
+			</form>  
+<script src="js/jquery-1.10.2.js"></script> 
+				
+		<script>
+
+		$(document).ready(function () {
+			
+			$("#updateAuth").click(function(event){
+		           var user = [];
+		           var jInfo = JSON.stringify(user);
+		            jQuery.ajax({
+		                type : "POST",  
+		                contentType : "application/json",  
+		                url : "/authentications/updateauth/3",
+		                data : jInfo,
+	                 beforeSend: function(request) {
+	                     //request.setRequestHeader("Auth-Token", "42021b5b79e4883493f607dab49ba594");
+	                     //request.setRequestHeader("Auth-Token","e81870d0cbbd3d2417677fb385c375e2");
+	                 },
+		                success : function(data){
+		                	alert("test success");
+		                },  
+		                error : function(){alert("test failed");}
+		                });
+
+		       });
+			
+			
+			$("#add").click(function(event){
+		           var user = new Object();
+		           user.userName=$("#userName").val();
+		           user.gender=$("#gender").val();
+				   user.password=$("#password").val();
+				   user.email=$("#email").val();
+				   user.birthday=$("#birthday").val();
+		           var jInfo = JSON.stringify(user);
+		            jQuery.ajax({
+		                type : "POST",  
+		                contentType : "application/json",  
+		                url : "/v1/users",
+		                data : jInfo,
+	                 beforeSend: function(request) {
+	                     //request.setRequestHeader("Auth-Token", "42021b5b79e4883493f607dab49ba594");
+	                     //request.setRequestHeader("Auth-Token","e81870d0cbbd3d2417677fb385c375e2");
+	                 },
+		                success : function(data){
+		                	alert("test success");
+		                },  
+		                error : function(){alert("test failed");}
+		                });
+
+		       });
+			
+			
+			$("#delete").click(function(event){
+				var id=$("#id").val();
+		            jQuery.ajax({
+		                type : "DELETE",  
+		                contentType : "application/json",  
+		                url : "/v1/users/"+id,
+	                 beforeSend: function(request) {
+	                     //request.setRequestHeader("Auth-Token", "42021b5b79e4883493f607dab49ba594");
+	                     //request.setRequestHeader("Auth-Token","e81870d0cbbd3d2417677fb385c375e2");
+	                 },
+		                success : function(data){
+		                	alert("delete success");
+		                },  
+		                error : function(){alert("delete failed");}
+		                });
+
+		       });
+			
+			$("#update").click(function(event){
+		           var user = new Object();
+		           user.id=$("#id").val();
+		           user.userName=$("#userName").val();
+		           user.gender=$("#gender").val();
+				   user.password=$("#password").val();
+				   user.email=$("#email").val();
+				   user.birthday=$("#birthday").val();
+		           var jInfo = JSON.stringify(user);
+		            jQuery.ajax({
+		                type : "PUT",  
+		                contentType : "application/json",  
+		                url : "/v1/users/"+user.id,
+		                data : jInfo,
+	                 beforeSend: function(request) {
+	                     //request.setRequestHeader("Auth-Token", "42021b5b79e4883493f607dab49ba594");
+	                     //request.setRequestHeader("Auth-Token","e81870d0cbbd3d2417677fb385c375e2");
+	                 },
+		                success : function(data){
+		                	alert("test success");
+		                },  
+		                error : function(){alert("test failed");}
+		                });
+
+		       });
+		});
+			
+		</script>
+</body>
+</html>

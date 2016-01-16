@@ -1,0 +1,348 @@
+package com.hongbao.dragon.controller.base;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+
+import com.hongbao.boapp.attachmenthelper.AttachmentCordEntity;
+import com.hongbao.boapp.attachmenthelper.IAttachmentHelper;
+import com.hongbao.boapp.businessobject.Attachment;
+import com.hongbao.boapp.complextype.DragonJsonReturnType;
+import com.hongbao.boapp.constant.DragonConstant;
+import com.hongbao.boapp.context.DragonThreadContext;
+import com.hongbao.boapp.exception.DragonBusinessException;
+import com.hongbao.boapp.service.IAttachmentService;
+import com.hongbao.boapp.serviceobject.AttachmentSo;
+import com.hongbao.dragon.app.DragonRenderScriptBean;
+import com.hongbao.dragonutil.DragonCommonMethod;
+
+public class DragonFileContoller extends DragonBaseController {
+
+	static final Logger logger = Logger.getLogger(DragonFileContoller.class);
+	
+	@Autowired
+	private DragonRenderScriptBean renderScriptBean;
+	
+	
+	@Autowired
+	private DragonThreadContext threadContext;
+
+	
+	@Autowired
+	private IAttachmentHelper attachmentHelper;
+
+	@Autowired
+	private IAttachmentService attachmentService;
+	
+	
+	public void downloadAction(Long id,String type,String method, Long modWidth,Long modHeight,
+			HttpServletRequest request,HttpServletResponse response) throws IOException, DragonBusinessException{
+		
+		Attachment attachment = this.attachmentService.get(id);
+		if(attachment == null){
+			throw new DragonBusinessException(20103);
+		}
+		
+
+		String baseRouteString = this.attachmentHelper.getFileCacheBaseDir();
+		String cacheFilePartRoute = "";
+		String fileGuidString = "";
+		Long fileSize = 0L;
+		if(type.equals("origin")){
+			cacheFilePartRoute = attachment.getDataFileCacheRoute() + attachment.getOriginFileGuid();
+			fileSize = attachment.getOriginFileSize();
+			fileGuidString = attachment.getOriginFileGuid();
+		}else if(type.equals("medium")){
+			cacheFilePartRoute = attachment.getDataFileCacheRoute() + attachment.getMediumFileGuid();
+			fileSize = attachment.getMediumFileSize();
+			fileGuidString = attachment.getMediumFileGuid();
+		}else{
+			cacheFilePartRoute = attachment.getDataFileCacheRoute() + attachment.getThumbFileGuid();
+			fileSize = attachment.getThumbFileSize();
+			fileGuidString = attachment.getThumbFileGuid();
+		}
+		
+		//查看modify时间
+		DateTime attachmentCreatedAt = attachment.getCreatedAt();
+		long modifySinceMillis = request.getDateHeader("If-Modified-Since");
+		long createdAtMillis = attachmentCreatedAt.getMillis();
+		if(modifySinceMillis >= createdAtMillis){
+			response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+			
+			long nowTimeMillis = new DateTime().getMillis();
+			long expireMillis = nowTimeMillis + 2592000000L;
+			
+			String attachmentCreatedAtGmtString = attachmentCreatedAt.withZone(DateTimeZone.UTC).toString("EEE, d MMM yyyy HH:mm:ss",Locale.US) + " GMT";
+			String expireGmtString = new DateTime(expireMillis).withZone(DateTimeZone.UTC).toString("EEE, d MMM yyyy HH:mm:ss",Locale.US) + " GMT";
+			//设置缓存
+			if(this.attachmentHelper.canCacheInClient()){
+				response.setHeader("Cache-Control", "public, max-age=2592000");
+				response.setHeader("Pragma", "cache");
+			}else{
+				response.setHeader("Cache-Control", "no-cache");  //严谨一点应该设为no-store，连文件都不让客户端存
+				response.setHeader("Pragma", "no-cache");
+			}
+
+			response.setHeader("Expires", expireGmtString);
+			response.setHeader("Last-Modified", attachmentCreatedAtGmtString);
+			response.setContentType(attachment.getContentType());
+			response.setContentLength(fileSize.intValue());
+			return;
+			
+		}
+		
+		String cacheFileDirectoryString = baseRouteString + attachment.getDataFileCacheRoute();
+		String cacheFileRouteString = baseRouteString + cacheFilePartRoute;
+		String cacheFileLoadingString = cacheFileRouteString+"_downloading";
+		
+		File cacheFile = new File(cacheFileRouteString);
+		//先判断文件是否存在
+
+		if(cacheFile.exists()){
+			//对应资源已下载
+			this.outputFileToResponse(attachment.getContentType(), fileSize, attachment.getFileName(), method, cacheFileRouteString, modWidth,modHeight,attachmentCreatedAt,request,response);
+			
+		}else{
+			//保证对应文件夹存在
+			Path cacheFileDirPath = Paths.get(cacheFileDirectoryString);
+			Files.createDirectories(cacheFileDirPath);
+			
+			
+			File cacheLoadingFile = new File(cacheFileLoadingString);
+			//判断cache文件是否已经正在被下载了
+			boolean isCreateSuccess = cacheLoadingFile.createNewFile();
+			if(isCreateSuccess){
+				//负责下载
+				this.attachmentHelper.downloadFileToLocal(cacheFileLoadingString, fileGuidString);
+				
+			}else{
+				//文件正在下载，同步开启另一个下载过程
+				int randomSeq = 0;
+				while(true){
+					randomSeq = new Random().nextInt(10000);
+					String newCacheFileLoadingString = cacheFileLoadingString + "_" + randomSeq;
+					File newCacheFileLoadingFile = new File(newCacheFileLoadingString);
+					if(newCacheFileLoadingFile.createNewFile()){
+						cacheFileLoadingString = newCacheFileLoadingString;
+						break;
+					}
+				}
+				this.attachmentHelper.downloadFileToLocal(cacheFileLoadingString, fileGuidString);
+				
+				
+			}
+			cacheLoadingFile = new File(cacheFileLoadingString);
+			//再次判断
+			if(cacheFile.exists()){
+				//其他线程已创建不用覆盖
+				cacheLoadingFile.delete();
+			}else{
+				//原子重命名,unix文件系统环境下经测试，会覆盖文件
+				Path sourcePath = Paths.get(cacheFileLoadingString);
+				Path targetPath = Paths.get(cacheFileRouteString);
+				Files.move(sourcePath, targetPath,  StandardCopyOption.ATOMIC_MOVE);
+			}
+			this.outputFileToResponse(attachment.getContentType(), fileSize, attachment.getFileName(), method, cacheFileRouteString, modWidth,modHeight,attachmentCreatedAt,request, response);
+			
+			
+			
+		}
+		
+
+
+
+		
+	}
+	
+	
+	private void outputFileToResponse(String contentType,Long fileSize,String fileName,String method,String resultFileRoute,Long w,Long h,DateTime createdAt,HttpServletRequest request,  HttpServletResponse response) throws IOException{
+		
+		boolean bCut = false;
+		if( this.attachmentHelper.isImageType(contentType) && w != null && h != null){
+			//图片类型且指定宽高，截图处理
+			String[] typeArr = contentType.split("/");
+			String resultFilePath = resultFileRoute+"_w_h_"+DragonCommonMethod.generateGuid();
+			DragonCommonMethod.resize(w.intValue(),h.intValue(), resultFileRoute, resultFilePath, typeArr[1]);
+			
+			resultFileRoute = resultFilePath;
+			File newFile = new File(resultFileRoute);
+			fileSize = newFile.length();
+			bCut = true;
+		}
+		
+		//输出
+		response.setStatus(HttpServletResponse.SC_OK);
+		response.setContentType(contentType);
+		response.setContentLength(fileSize.intValue());
+		if(method.equals(DragonConstant.CONTENT_DEPOSITION_INLINE)){
+			response.setHeader("Content-disposition", DragonConstant.CONTENT_DEPOSITION_INLINE+";filename=\"" + java.net.URLEncoder.encode(fileName, "UTF-8") + "\"");
+			//long createdAtMillis = createdAt.getMillis();
+			long nowTimeMillis = new DateTime().getMillis();
+			long expireMillis = nowTimeMillis + 2592000000L;
+			
+			String attachmentCreatedAtGmtString = createdAt.withZone(DateTimeZone.UTC).toString("EEE, d MMM yyyy HH:mm:ss",Locale.US) + " GMT";
+			String expireGmtString = new DateTime(expireMillis).withZone(DateTimeZone.UTC).toString("EEE, d MMM yyyy HH:mm:ss",Locale.US) + " GMT";
+			//设置缓存
+			if(this.attachmentHelper.canCacheInClient()){
+				response.setHeader("Cache-Control", "public, max-age=2592000");
+				response.setHeader("Pragma", "cache");
+			}else{
+				response.setHeader("Cache-Control", "no-cache");//严谨一点应该设为no-store，连文件都不让客户端存
+				response.setHeader("Pragma", "no-cache");
+			}
+
+
+			response.setHeader("Expires", expireGmtString);
+			response.setHeader("Last-Modified", attachmentCreatedAtGmtString);
+			
+		}else{
+			response.setHeader("Content-disposition", DragonConstant.CONTENT_DEPOSITION_ATTACHMENT+";filename=\"" + java.net.URLEncoder.encode(fileName, "UTF-8") + "\"");
+		}
+		
+	
+		//判断是否断点续传
+		String httpRangeString = request.getHeader("HTTP_RANGE");
+		
+		if(httpRangeString != null){
+			
+			String nowGmtString = new DateTime().withZone(DateTimeZone.UTC).toString("EEE, d MMM yyyy HH:mm:ss",Locale.US) + " GMT";
+			
+			response.setStatus(HttpServletResponse.SC_PARTIAL_CONTENT);
+			response.setHeader("Date", nowGmtString);
+			response.setHeader("Accept-Ranges", "bytes");
+			Map<String, Long> rangeMap = this.getRange(fileSize,httpRangeString);
+			long start = rangeMap.get("start");
+			long end = rangeMap.get("end");
+			Long transmitSize = end - start + 1L;
+			response.setContentLength(transmitSize.intValue());
+			response.setHeader("Content-Range", "bytes " + start + "-" + end + fileSize);
+			
+			
+			//BufferedInputStream bis = new BufferedInputStream(new FileInputStream(resultFileRoute));
+			RandomAccessFile bis = new  RandomAccessFile(resultFileRoute,"r"); 
+			bis.seek(start);
+			
+			BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream());
+			byte[] buff = new byte[1024 * 5];
+			int bytesRead = 0;
+			while((bytesRead = bis.read(buff, 0, 1024*5)) != -1){
+				bos.write(buff,0,bytesRead);
+			}
+			bis.close();
+			bos.close();
+			
+		}else{
+			BufferedInputStream bis = new BufferedInputStream(new FileInputStream(resultFileRoute));
+			BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream());
+			byte[] buff = new byte[1024 * 5];
+			int bytesRead = 0;
+			while((bytesRead = bis.read(buff, 0, 1024*5)) != -1){
+				bos.write(buff,0,bytesRead);
+			}
+
+			bis.close();
+			bos.close();
+		}
+		
+
+		
+		if(bCut){
+			Files.delete(Paths.get(resultFileRoute));
+		}
+		
+	}
+	
+	
+	private Map<String, Long> getRange(Long fileSize,String rangeString){
+		String subString = rangeString.substring(6);
+		String[] strings = subString.split("-");
+		Long startLong = 0L;
+		Long endLong = 0L;
+		if(strings.length < 2){
+			startLong = new Long(strings[0]);
+			endLong  = fileSize - 1;
+		}else{
+			startLong = new Long(strings[0]);
+			endLong  = new Long(strings[1]);
+		}
+		Map<String, Long> mapsMap = new HashMap<String, Long>();
+		mapsMap.put("start", startLong);
+		mapsMap.put("end", endLong);
+		return mapsMap;
+	}
+
+	 public DragonJsonReturnType upload(HttpServletRequest request,  
+	            HttpServletResponse response) throws IOException, DragonBusinessException{
+		 
+		 MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;  
+		 String usage = multipartRequest.getParameter("usage");
+		 String cordX = multipartRequest.getParameter("cordX");
+		 String cordY = multipartRequest.getParameter("cordY");
+		 String cordWidth = multipartRequest.getParameter("cordWidth");
+		 String cordHeight = multipartRequest.getParameter("cordHeight");
+		 String adjustWidth = multipartRequest.getParameter("adjustWidth");
+		 
+		 AttachmentCordEntity cordEntity = null;
+		 if(adjustWidth != null){
+			 cordEntity = new AttachmentCordEntity();
+			 cordEntity.setCordX(Integer.valueOf(cordX));
+			 cordEntity.setCordY(Integer.valueOf(cordY));
+			 cordEntity.setCordWidth(Integer.valueOf(cordWidth));
+			 cordEntity.setCordHeight(Integer.valueOf(cordHeight));
+			 cordEntity.setAdjustWidth(Integer.valueOf(adjustWidth));
+		 }
+		 
+	     CommonsMultipartFile file = (CommonsMultipartFile) multipartRequest.getFile("image");  
+
+	     Attachment attachment = null;
+	     if(file != null && file.getSize() > 0 ){
+
+	    	 
+	    	 InputStream fileInputStream = file.getInputStream();
+	    	 String contentTypeString = file.getContentType();
+	    	 Long fileSize = file.getSize();
+	    	 String fileOriginString = file.getOriginalFilename();
+	    	 
+    		 attachment = this.attachmentHelper.uploadFile(fileInputStream, contentTypeString, fileOriginString, fileSize, "", 0L, "",usage,cordEntity);
+			 fileInputStream.close();
+	     
+	     }else{
+	    	 throw new DragonBusinessException(20202);
+	     }
+	    
+	     AttachmentSo so = this.threadContext.getBoFacade().convertFromBo(attachment, AttachmentSo.class);
+		
+	     return DragonJsonReturnType.createType(so);
+	
+	 }
+	
+	
+}

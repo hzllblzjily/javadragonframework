@@ -1,0 +1,132 @@
+package com.hongbao.dragon.controller.home;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.hongbao.boapp.attachmenthelper.IAttachmentHelper;
+import com.hongbao.boapp.businessobject.Attachment;
+import com.hongbao.boapp.businessobject.Student;
+import com.hongbao.boapp.complextype.DragonJsonReturnType;
+import com.hongbao.boapp.context.DragonThreadContext;
+import com.hongbao.boapp.dao.IStudentDao;
+import com.hongbao.boapp.exception.DragonBusinessException;
+import com.hongbao.boapp.service.IAttachmentService;
+import com.hongbao.boapp.service.IStudentService;
+import com.hongbao.boapp.serviceobject.AttachmentSo;
+import com.hongbao.boapp.serviceobject.StudentSo;
+import com.hongbao.dragon.annotation.HomePermission;
+import com.hongbao.dragon.annotation.HomePermissionRole;
+import com.hongbao.dragon.app.DragonRenderScriptBean;
+import com.hongbao.dragon.controller.base.DragonHomeBaseController;
+import com.hongbao.dragonutil.enumeration.EmGender;
+
+
+
+@Controller("/home/index")
+@RequestMapping("/home/index")
+public class IndexController extends DragonHomeBaseController{
+
+	@Autowired
+	private DragonRenderScriptBean renderScriptBean;
+	
+	
+	@Autowired
+	private DragonThreadContext threadContext;
+	
+	@Autowired
+	private IAttachmentService attachmentService;
+	
+
+	@Autowired
+	private IStudentService studentService;
+	
+	@Autowired
+	private IAttachmentHelper attachmentHelper;
+	
+	
+	static final Logger logger = Logger.getLogger(IndexController.class);
+	
+	
+
+
+	@RequestMapping("/helloworld")
+	public ModelAndView helloWorld() throws DragonBusinessException{
+		ModelAndView mv = new ModelAndView("/index/index");
+
+		throw new DragonBusinessException(20103);
+		//mv.addObject("message","Hello World");
+		//return mv;
+	}
+
+	@RequestMapping(value = "/index",method = RequestMethod.GET) 
+	@ResponseBody
+	//@HomePermission({HomePermissionRole.COMMON_USER})
+	@Transactional(rollbackFor=Exception.class,propagation=Propagation.REQUIRED,readOnly=false) 
+	public DragonJsonReturnType index(@RequestParam(value="creationTime",required=false) @DateTimeFormat(pattern="yyyy-MM-dd HH:mm:ss") DateTime dateTime, @RequestParam(value="id",required=false,defaultValue="0")long id,@RequestParam(value="name",required=false,defaultValue="")String name) throws DragonBusinessException, NoSuchMethodException, SecurityException, IOException, InterruptedException{
+		
+
+		Attachment at = this.attachmentService.get(97L);
+		
+		
+		int i = 0;
+//	    if(id ==0 ){
+//			for (int i = 0; i < 1000000; i++) {
+//				Student student = this.studentService.get(14L);
+//				
+//				student.setName("hzl");
+//				student.setGender(EmGender.MALE);
+//				student.setScore(1.1f);
+//				student.setBirth(new DateTime(1988,7,1,0,0,0));
+//			
+//				
+//				//this.studentService.create(student);
+//				List<Student> students = this.studentService.listStudentByName(name);
+//			}
+//	    }
+	    
+
+//		
+//		String requestUrl = this.servletRequest.getServerName();
+		
+		//throw new DragonBusinessException(20103);
+		AttachmentSo so = this.threadContext.getBoFacade().convertFromBo(at, AttachmentSo.class);
+		return DragonJsonReturnType.createType(so);
+
+	}
+	
+	@RequestMapping(value = "/loginpage",method = RequestMethod.GET) 
+	public @ResponseBody String loginPage() throws DragonBusinessException, NoSuchMethodException, SecurityException{
+
+		return "登录界面";
+
+	}
+
+}

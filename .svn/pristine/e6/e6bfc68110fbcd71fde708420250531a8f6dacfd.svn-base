@@ -1,0 +1,12 @@
+@CHARSET "UTF-8";
+/**--main-content--**/
+#main-content{
+	margin-top: 0.1875rem;
+}
+#main-content .container{
+	position: relative;
+	margin:0 auto;
+	width: 64rem;
+
+	/*background: #fafaf7;*/
+}

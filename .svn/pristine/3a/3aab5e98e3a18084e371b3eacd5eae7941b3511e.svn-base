@@ -1,0 +1,1 @@
+<%@ page contentType="application/json" pageEncoding="UTF-8"%>{"status":"fail","data":{"errCode":${errCode},"errMessage":"${errMessage}"}}

@@ -1,0 +1,134 @@
+package com.hongbao.dragon.aspectj;
+
+import java.lang.reflect.Method;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.hongbao.boapp.businessobject.User;
+import com.hongbao.boapp.complextype.CurrentUserInfo;
+import com.hongbao.boapp.constant.DragonConstant;
+import com.hongbao.boapp.context.DragonAuthenticationMgr;
+import com.hongbao.boapp.context.DragonThreadContext;
+import com.hongbao.boapp.exception.DragonBusinessException;
+import com.hongbao.boapp.service.IUserService;
+import com.hongbao.dragon.annotation.HomePermission;
+import com.hongbao.dragon.cookie.DragonCookieMgr;
+import com.hongbao.dragon.session.DragonSessionMgr;
+import com.hongbao.dragonutil.DragonCommonMethod;
+
+@Aspect
+public class DragonControllerAspect {
+
+	
+	static final Logger log = Logger.getLogger(DragonControllerAspect.class);
+
+	@Autowired
+	private DragonThreadContext threadContext;
+
+	
+	@Autowired
+	private HttpServletRequest request;
+	
+	@Autowired
+	private HttpServletResponse response;
+	
+	@Autowired
+	private IUserService userService;
+	
+	@Autowired
+	private DragonSessionMgr sessionMgr;
+	
+	@Autowired
+	private DragonCookieMgr cookieMgr;
+	
+
+	
+	//指定带有requestmapping标签的方法并在home controller包中
+	@Around("execution(* com.hongbao.dragon.controller.home.*.*(..)) && @annotation(org.springframework.web.bind.annotation.RequestMapping)")
+	public Object homeControllerBeforeValidation(ProceedingJoinPoint joinPoint) throws Throwable{
+
+
+		if(!this.threadContext.getAuthenticationMgr().getModuleName().equals(DragonAuthenticationMgr.HOME_MODULE)){
+			throw new DragonBusinessException(20106);
+		}
+		Method method = ((MethodSignature)joinPoint.getSignature()).getMethod();
+		HomePermission homePermission = method.getAnnotation(HomePermission.class);
+		if(homePermission == null){
+			//公共方法
+			Object resultObject =  joinPoint.proceed();
+			return resultObject;
+		}
+		
+		//判断当前用户
+		CurrentUserInfo currentUserInfo = this.sessionMgr.getCurrentUserInfo();
+		if(currentUserInfo == null){
+			//还未登录,判断是否自动登录
+			String userEmail = null;
+			String userCookieToken = null;
+			userEmail = this.cookieMgr.getCookieByName(DragonConstant.COOKIE_USER_EMAIL);
+			userCookieToken = this.cookieMgr.getCookieByName(DragonConstant.COOKIE_USER_TOKEN);
+
+			if(!DragonCommonMethod.isEmptyString(userEmail) && !DragonCommonMethod.isEmptyString(userCookieToken)){
+				User user = this.userService.getUserByEmailAndCookieToken(userEmail, userCookieToken);
+				if(user != null){
+					//自动登录
+					currentUserInfo = this.sessionMgr.userLogin(user);
+				}
+			}
+		}
+		
+		
+		if(currentUserInfo == null){
+			//未登录，跳转登录界面
+			this.response.sendRedirect("/home/index/loginpage");
+			return null;
+		}
+		
+		//进入并执行
+		Object resultObject =  joinPoint.proceed();
+		return resultObject;
+		
+	}
+	
+	//指定带有requestmapping标签的方法并在api controller包中
+	@Before("execution(* com.hongbao.dragon.controller.api.*.*(..)) && @annotation(org.springframework.web.bind.annotation.RequestMapping)")
+	public void apiControllerBeforeValidation() throws DragonBusinessException{
+		if(!this.threadContext.getAuthenticationMgr().getModuleName().equals(DragonAuthenticationMgr.API_MODULE)){
+			throw new DragonBusinessException(20106);
+		}
+		
+	}
+	
+	//指定带有requestmapping标签的方法并在admin controller包中
+	@Before("execution(* com.hongbao.dragon.controller.admin.*.*(..)) && @annotation(org.springframework.web.bind.annotation.RequestMapping)")
+	public void adminControllerBeforeValidation() throws DragonBusinessException{
+		if(!this.threadContext.getAuthenticationMgr().getModuleName().equals(DragonAuthenticationMgr.ADMIN_MODULE)){
+			throw new DragonBusinessException(20106);
+		}
+		
+	}
+
+//	 @Around("execution(* com.hongbao.dragon.controller.home.*.*(..))")
+//	 public Object logArround(ProceedingJoinPoint joinPoint) throws Throwable{
+//
+//		 Object[] args =  joinPoint.getArgs();
+//		 
+//
+//		 Object resultObject =  joinPoint.proceed();
+//		 
+//		 return resultObject;
+//		 
+//
+//		 
+//
+//	 }
+}

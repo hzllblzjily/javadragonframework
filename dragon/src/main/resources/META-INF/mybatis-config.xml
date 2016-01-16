@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+  <settings>
+	<setting name="logImpl" value="LOG4J" />
+	<setting name="lazyLoadingEnabled" value="true"/>
+	<setting name="aggressiveLazyLoading" value="false"/>
+  </settings>
+  <typeAliases>
+    <typeAlias type="com.hongbao.boapp.businessobject.User" alias="User"/>
+    <typeAlias type="com.hongbao.boapp.businessobject.Attachment" alias="Attachment"/>
+    <typeAlias type="com.hongbao.boapp.businessobject.Student" alias="Student"/>
+    <typeAlias type="com.hongbao.boapp.businessobject.Teacher" alias="Teacher"/>
+    <typeAlias type="com.hongbao.boapp.businessobject.Author" alias="Author"/>
+    <typeAlias type="com.hongbao.boapp.businessobject.Subject" alias="Subject"/>
+    <typeAlias type="com.hongbao.boapp.businessobject.Post" alias="Post"/>
+    <typeAlias type="com.hongbao.boapp.mybatis.typehandler.JodaDateTimeTypeHandler" alias="JodaDateTimeTypeHandler"/>
+    <typeAlias type="com.hongbao.boapp.mybatis.typehandler.JodaDateTypeHandler" alias="JodaDateTypeHandler"/>
+    <typeAlias type="com.hongbao.boapp.mybatis.typehandler.GenderTypeHandler" alias="GenderTypeHandler"/>
+  </typeAliases>
+  <typeHandlers>
+  	<typeHandler handler="com.hongbao.boapp.mybatis.typehandler.JodaDateTimeTypeHandler"/>
+  	<typeHandler handler="com.hongbao.boapp.mybatis.typehandler.JodaDateTypeHandler"/>
+  	<typeHandler handler="com.hongbao.boapp.mybatis.typehandler.GenderTypeHandler"/>
+  </typeHandlers>
+</configuration>

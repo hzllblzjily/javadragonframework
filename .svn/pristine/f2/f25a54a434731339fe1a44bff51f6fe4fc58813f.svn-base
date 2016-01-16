@@ -1,0 +1,45 @@
+package com.hongbao.boapp.complextype;
+
+
+
+
+@ComplexType
+public class CurrentUserInfo {
+
+	private Long id = 0L;
+	private String userName = "";
+	private String email = "";
+	private String defaultAvatarString = "";
+	
+	
+	
+	
+	public String getDefaultAvatarString() {
+		return defaultAvatarString;
+	}
+	public void setDefaultAvatarString(String defaultAvatarString) {
+		this.defaultAvatarString = defaultAvatarString;
+	}
+
+	public Long getId() {
+		return id;
+	}
+	public void setId(Long id) {
+		this.id = id;
+	}
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	public String getEmail() {
+		return email;
+	}
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	
+	
+}

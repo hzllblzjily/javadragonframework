@@ -1,0 +1,541 @@
+package com.hongbao.boapp.attachmenthelper;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Random;
+
+import javax.imageio.ImageIO;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.aliyun.oss.HttpMethod;
+import com.aliyun.oss.model.GeneratePresignedUrlRequest;
+import com.aliyun.oss.model.ObjectMetadata;
+import com.aliyun.oss.model.ResponseHeaderOverrides;
+import com.hongbao.boapp.businessobject.Attachment;
+import com.hongbao.boapp.constant.DragonConstant;
+import com.hongbao.boapp.context.DragonThreadContext;
+import com.hongbao.boapp.exception.DragonBusinessException;
+import com.hongbao.boapp.service.IAttachmentService;
+import com.hongbao.dragonutil.DragonCommonMethod;
+import com.hongbao.dragonutil.oss.DragonOssClient;
+
+public class DragonOssAttachmentHelper implements IAttachmentHelper {
+
+	@Autowired
+	private IAttachmentService attachmentService;
+	
+	
+	@Autowired
+	private DragonThreadContext threadContext;
+	
+	private String ossKeyString;
+	private String ossSecretString;
+	private String ossHostNameString;
+	private String ossBucketNameString;
+	private String aliasHostName;
+	private boolean isUseImageService;   //是否使用图片处理相关的域
+	private String imgHostName;         //带图片处理相关的oss host域
+	private String imgCdnHostNameString;//带图片处理相关的oss cdn域
+	private boolean isReadFromOss;      //是否直接从oss读取文件
+	private String ossCacheFileBaseRoute; //从自身web server读取oss文件时本地cdn base路径
+	private boolean isOssReadPublic;       //从oss读取文件时是否是公开读
+	private boolean canCacheInClient;     //是否允许客户端缓存
+	private int ossReadAuthExpireTime;    //过期授权外界读权限有效时间 
+
+
+	
+	
+	public boolean isValidType(String contentType) throws DragonBusinessException{
+		if(contentType.equals("image/png") || contentType.equals("image/jpg") || contentType.equals("image/jpeg") || contentType.equals("image/gif")){
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isImageType(String contentType){
+		if(contentType.equals("image/png") || contentType.equals("image/jpg") || contentType.equals("image/jpeg") || contentType.equals("image/gif")){
+			return true;
+		}
+		return false;
+	}
+	public String getFileUrlString(Long id,String type,String contentType,String keyPath,String method) throws DragonBusinessException{
+		
+			if(this.isReadFromOss){
+				//直接生成oss的link
+				if(this.isOssReadPublic && method.equals(DragonConstant.CONTENT_DEPOSITION_INLINE)){
+					if(this.isUseImageService && this.isImageType(contentType)){
+						//public方式并且是在线内嵌打开,使用图片服务,需要用CDN别名读取
+						String fileUrlString = this.imgCdnHostNameString + "/" + keyPath;
+						return fileUrlString;
+					}else{
+						//public方式并且是在线内嵌打开,需要用HOST别名读取
+						String fileUrlString = this.aliasHostName + "/" + keyPath;
+						return fileUrlString;
+					}
+
+					
+				}else{
+					//(1)public方式并且是下载，只能采用signature方式，否则无法修改response的contentdisposition
+					//(2)非public方式下载
+					String hostNameString = "";
+					
+					if(this.isUseImageService){
+						//图片处理相关的@字段放在keypath内，否则无法拼接进signature
+						hostNameString = this.imgCdnHostNameString;
+					}else{
+						hostNameString = this.aliasHostName;
+					}
+					Date expiration = new Date(new Date().getTime() + this.ossReadAuthExpireTime * 1000);
+					DragonOssClient client = new DragonOssClient(hostNameString, this.ossKeyString, this.ossSecretString);
+					GeneratePresignedUrlRequest  gRequest = new GeneratePresignedUrlRequest(this.ossBucketNameString, keyPath, HttpMethod.GET);
+					gRequest.setExpiration(expiration);
+					ResponseHeaderOverrides responseHeaderOverrides = new ResponseHeaderOverrides();
+					responseHeaderOverrides.setContentDisposition(method+ ";fileName=\"" + keyPath +"\"");
+					gRequest.setResponseHeaders(responseHeaderOverrides);
+					URL fileURL = client.getClient().generatePresignedUrl(gRequest);
+					
+					String fileString  = fileURL.toString();
+					return fileString;
+					
+
+				}
+
+
+			}else{
+				//返回本地服务器地址
+				String picServerJsonArrayString = (String)this.threadContext.getApplicationProperties().get("server.picServers");
+				
+				JSONArray jsonArray = new JSONArray(picServerJsonArrayString);
+				Random random = new Random();
+				int randomSeq = random.nextInt(jsonArray.length());
+				
+				JSONObject serverObj =  (JSONObject)jsonArray.get(randomSeq);
+
+				String serverUrl = serverObj.getString("url");
+				return serverUrl + "/pic/files/download?id="+id+"&type="+type;
+
+			}
+		
+		
+
+	}
+
+
+
+	
+	
+
+
+	public boolean isUseImageService() {
+		return isUseImageService;
+	}
+
+	public void setUseImageService(boolean isUseImageService) {
+		this.isUseImageService = isUseImageService;
+	}
+
+	public String getImgHostName() {
+		return imgHostName;
+	}
+
+	public void setImgHostName(String imgHostName) {
+		this.imgHostName = imgHostName;
+	}
+
+	public String getImgCdnHostNameString() {
+		return imgCdnHostNameString;
+	}
+
+	public void setImgCdnHostNameString(String imgCdnHostNameString) {
+		this.imgCdnHostNameString = imgCdnHostNameString;
+	}
+
+	public String getAliasHostName() {
+		return aliasHostName;
+	}
+
+	public void setAliasHostName(String aliasHostName) {
+		this.aliasHostName = aliasHostName;
+	}
+
+	public boolean isCanCacheInClient() {
+		return canCacheInClient;
+	}
+
+	public void setCanCacheInClient(boolean canCacheInClient) {
+		this.canCacheInClient = canCacheInClient;
+	}
+
+	public void setOssReadPublic(boolean isOssReadPublic) {
+		this.isOssReadPublic = isOssReadPublic;
+	}
+
+	public boolean getIsOssReadPublic() {
+		return isOssReadPublic;
+	}
+
+
+
+	public String  getOssCacheFileBaseRoute() {
+		return ossCacheFileBaseRoute;
+	}
+
+	public void setOssCacheFileBaseRoute(String ossCacheFileBaseRoute) {
+		this.ossCacheFileBaseRoute = ossCacheFileBaseRoute;
+	}
+
+
+	public boolean isReadFromOss() {
+		return isReadFromOss;
+	}
+
+	public void setReadFromOss(boolean isReadFromOss) {
+		this.isReadFromOss = isReadFromOss;
+	}
+
+	public int getOssReadAuthExpireTime() {
+		return ossReadAuthExpireTime;
+	}
+
+	public void setOssReadAuthExpireTime(int ossReadAuthExpireTime) {
+		this.ossReadAuthExpireTime = ossReadAuthExpireTime;
+	}
+
+	public String getOssKeyString() {
+		return ossKeyString;
+	}
+
+	public void setOssKeyString(String ossKeyString) {
+		this.ossKeyString = ossKeyString;
+	}
+
+	public String getOssSecretString() {
+		return ossSecretString;
+	}
+
+	public void setOssSecretString(String ossSecretString) {
+		this.ossSecretString = ossSecretString;
+	}
+
+	public String getOssHostNameString() {
+		return ossHostNameString;
+	}
+	
+
+	public void setOssHostNameString(String ossHostNameString) {
+		this.ossHostNameString = ossHostNameString;
+	}
+
+	public String getOssBucketNameString() {
+		return ossBucketNameString;
+	}
+
+	public void setOssBucketNameString(String ossBucketNameString) {
+		this.ossBucketNameString = ossBucketNameString;
+	}
+
+    
+
+    private String generateCacheFileDirectory() throws IOException{
+    	String baseRouteString = this.ossCacheFileBaseRoute;
+    	Calendar nowCalendar = Calendar.getInstance();
+    	int year = nowCalendar.get(Calendar.YEAR);
+    	int month = nowCalendar.get(Calendar.MONTH) + 1;
+    	int day = nowCalendar.get(Calendar.DAY_OF_MONTH);
+    	
+    	String endRouteString ="";
+    	String fullRoute = "";
+		int index = 0;
+		while(index < 3){
+			switch (index){
+				case 0:{
+					endRouteString = "/" + year;
+					break;
+				}
+				case 1:{
+					endRouteString = endRouteString + "/" + month;
+					break;
+				}
+				case 2:{
+					endRouteString = endRouteString + "/" + day;
+					break;
+				}
+			
+
+			}
+		    fullRoute = baseRouteString + endRouteString;
+		    File file = new File(fullRoute);
+		    if(!file.exists()){
+		    	file.mkdir();
+		    }
+
+			index++;
+			
+		}
+
+		Path fullRouteDirPath = FileSystems.getDefault().getPath(fullRoute);
+		Files.createDirectories(fullRouteDirPath);
+		
+		return endRouteString + "/";
+		
+	
+    	
+    }
+    
+	public String getFileCacheBaseDir(){
+		return this.ossCacheFileBaseRoute;
+	}
+    
+    private void uploadFileToAliOss(String localFilePath, String osskeyPath,ObjectMetadata metaData) throws FileNotFoundException{
+        
+    	DragonOssClient client = new DragonOssClient(this.ossHostNameString, this.ossKeyString, this.ossSecretString);
+    	client.putObject(this.ossBucketNameString, osskeyPath, localFilePath, metaData);
+
+    	
+    }
+    
+    public void downloadFileFromAliOss(String localFilePath, String osskeyPath) throws IOException{
+    	
+    	DragonOssClient client = new DragonOssClient(this.ossHostNameString, this.ossKeyString, this.ossSecretString);
+    	client.getObject(this.ossBucketNameString, osskeyPath, localFilePath);
+    }
+    
+    public void downloadFileToLocal(String localFilePath,String keyPath) throws IOException{
+    	this.downloadFileFromAliOss(localFilePath, keyPath);
+    }
+    
+    public Attachment uploadFile(InputStream inputStream,String fileType,String originFileName,Long fileSize,String modelName,Long modelId,String modelColumn,String usage,AttachmentCordEntity cordEntity) throws IOException, DragonBusinessException{
+
+    	if(!this.isValidType(fileType)){
+    		throw new DragonBusinessException(20201);
+    	}
+    	
+    	Attachment attachment = new Attachment();
+    	attachment.setFileName(originFileName);
+    	attachment.setModelColumn(modelColumn);
+    	attachment.setModelName(modelName);
+    	attachment.setModelId(modelId);
+    	attachment.setOriginFileSize(fileSize);
+    	
+    	ObjectMetadata metadata = new ObjectMetadata();
+    	if(this.canCacheInClient){
+        	metadata.setCacheControl("public, max-age=31536000");
+    	}else{
+    		//从oss上read且非public公开，不能做缓存
+        	metadata.setCacheControl("no-cache");//严谨一点应该设为no-store，连文件都不让客户端存
+
+    	}
+
+    	
+    	//默认content deposition为inline
+    	metadata.setContentDisposition(DragonConstant.CONTENT_DEPOSITION_INLINE + ";fileName=\"" + originFileName +"\"");
+    	
+    	
+    	String baseRouteString = this.ossCacheFileBaseRoute;
+    	String suffixString = fileType.split("/")[1];
+    	String dateFileCacheRoute = this.generateCacheFileDirectory();
+    	String originFileGuidString = DragonCommonMethod.generateGuid();
+    	String originFileFinalRoute = baseRouteString + dateFileCacheRoute + originFileGuidString +"." + suffixString;
+    	
+    	attachment.setDataFileCacheRoute(dateFileCacheRoute);
+    	
+    	//写原文件
+    	FileOutputStream originOutputStream = new FileOutputStream(originFileFinalRoute);
+    	byte[] buffer = new byte[1024 * 10];
+    	int byteRead = 0;
+    	while((byteRead = inputStream.read(buffer)) != -1){
+    		//int availableCount = inputStream.available();
+    		
+    		originOutputStream.write(buffer, 0, byteRead);
+    	}
+    	originOutputStream.close();
+    	
+       	if(this.isImageType(fileType)){
+       		//图片类型，重新判断content type
+       		String inTypeString = DragonCommonMethod.getImageFormat(new File(originFileFinalRoute));
+       		
+       		if(inTypeString == null){
+       			throw new DragonBusinessException(20201);
+       		}
+       		inTypeString = inTypeString.toLowerCase();
+       		String newfileType = "image/"+inTypeString;
+       		if(!fileType.equals(newfileType)){
+       			//改名
+       			suffixString = inTypeString;
+       			File oldFile = new File(originFileFinalRoute);
+       			originFileFinalRoute = baseRouteString + dateFileCacheRoute + originFileGuidString +"." + suffixString;
+       			oldFile.renameTo(new File(originFileFinalRoute));
+       			fileType = newfileType;
+       		}
+
+       	}
+    	
+       	
+    	
+    	attachment.setOriginFileGuid(originFileGuidString + "." + suffixString);
+      	attachment.setContentType(fileType);
+      	
+       	if(this.isImageType(fileType)){
+        	//获得图片大小
+       		File picture = new File(originFileFinalRoute); 
+       		
+            BufferedImage sourceImg =ImageIO.read(new FileInputStream(picture)); 
+            int originWidth = sourceImg.getWidth();
+            int originHeight = sourceImg.getHeight();
+            attachment.setImageWidth((long) originWidth);
+            attachment.setImageHeight((long) originHeight);
+
+       		
+          	if(cordEntity != null){
+          		//调整并截图
+          		float ratio = cordEntity.getAdjustWidth() / (float)originWidth;
+          		int cordX = (int) (cordEntity.getCordX() / ratio);
+          		int cordY = (int) (cordEntity.getCordY() / ratio);
+          		int cordWidth = (int) (cordEntity.getCordWidth() / ratio);
+          		int cordHeight = (int) (cordEntity.getCordHeight() / ratio);
+          		
+            	String cordFileRouteString = dateFileCacheRoute;
+            	String cordFileGuidString = DragonCommonMethod.generateGuid();
+            	String cordFileFinalRoute = baseRouteString + cordFileRouteString + cordFileGuidString +"." + suffixString;
+            	
+            	DragonCommonMethod.cutImage(cordWidth, cordHeight, cordX, cordY, originFileFinalRoute, cordFileFinalRoute, suffixString);
+          		picture = new File(originFileFinalRoute);
+          		picture.delete();
+            	
+            	originFileFinalRoute = cordFileFinalRoute;
+            	originFileGuidString = cordFileGuidString;
+            	
+           		picture = new File(originFileFinalRoute); 
+           		
+                sourceImg =ImageIO.read(new FileInputStream(picture)); 
+                
+                originWidth = sourceImg.getWidth();
+                originHeight = sourceImg.getHeight();
+                attachment.setImageWidth((long) originWidth);
+                attachment.setImageHeight((long) originHeight);
+                attachment.setOriginFileSize(picture.length());
+            	attachment.setOriginFileGuid(originFileGuidString + "." + suffixString);
+            	
+          	}
+       		
+        	//upload上阿里云
+          	metadata.setContentLength(attachment.getOriginFileSize());
+          	metadata.setContentType(attachment.getContentType());
+        	this.uploadFileToAliOss(originFileFinalRoute,  originFileGuidString +"." + suffixString,metadata);
+        	
+        	
+    		//压缩图片
+            int maxSizeLength = 0;
+       		if(originWidth < originHeight){
+       			maxSizeLength = originHeight;
+       		}else{
+       			maxSizeLength = originWidth;
+       		}
+       		int mediumWidth = 0;
+       		int mediumHeight = 0;
+       		int thumbWidth = 0;
+       		int thumbHeight = 0;
+       		int mediumLimit = 0;
+       		int thumbLimit = 0;
+       		if(usage == null){
+       			usage = "";
+       		}
+       		if(usage.equals("userAvatar")){
+       			mediumLimit = 320;
+       			thumbLimit = 240;
+       		}else{
+       			mediumLimit = 640;
+       			thumbLimit = 180;
+       		}
+        	String mediumFileRouteString = dateFileCacheRoute;
+        	String mediumFileGuidString = DragonCommonMethod.generateGuid();
+        	String mediumFileFinalRoute = baseRouteString + mediumFileRouteString + mediumFileGuidString +"." + suffixString;
+        	if(mediumLimit >= maxSizeLength){
+        		//不压缩中图
+        		mediumWidth = originWidth;
+        		mediumHeight = originHeight;
+        		DragonCommonMethod.copyFile(originFileFinalRoute, mediumFileFinalRoute);
+        		attachment.setMediumFileSize(attachment.getOriginFileSize());
+        		
+        	}else{
+        		//压缩
+        		float ratio = (float)mediumLimit / maxSizeLength;
+        		mediumWidth =  (int) Math.floor(originWidth * ratio);
+        		mediumHeight = (int) Math.floor(originHeight * ratio);
+        		
+        		DragonCommonMethod.resize(mediumWidth, mediumHeight, originFileFinalRoute, mediumFileFinalRoute, suffixString);
+        		picture = new File(mediumFileFinalRoute); 
+        		attachment.setMediumFileSize(picture.length());
+        	}
+        	attachment.setMediumFileGuid(mediumFileGuidString +"." + suffixString);
+        
+        	//upload上阿里云
+          	metadata.setContentLength(attachment.getMediumFileSize());
+          	metadata.setContentType(attachment.getContentType());
+        	this.uploadFileToAliOss(mediumFileFinalRoute, mediumFileGuidString +"." + suffixString,metadata);
+        	
+        	String thumbFileRouteString = dateFileCacheRoute;
+        	String thumbFileGuidString = DragonCommonMethod.generateGuid();
+        	String thumbFileFinalRoute = baseRouteString + thumbFileRouteString + thumbFileGuidString +"." + suffixString;
+        	if(thumbLimit >= maxSizeLength){
+        		//不压缩中图
+        		thumbWidth = originWidth;
+        		thumbHeight = originHeight;
+        		DragonCommonMethod.copyFile(originFileFinalRoute, thumbFileFinalRoute);
+        		attachment.setThumbFileSize(attachment.getOriginFileSize());
+        		
+        	}else{
+        		//压缩
+        		float ratio = (float)thumbLimit / maxSizeLength;
+        		thumbWidth =  (int) Math.floor(originWidth * ratio);
+        		thumbHeight = (int) Math.floor(originHeight * ratio);
+        		
+        		DragonCommonMethod.resize(thumbWidth, thumbHeight, originFileFinalRoute, thumbFileFinalRoute, suffixString);
+        		picture = new File(thumbFileFinalRoute); 
+        		attachment.setThumbFileSize(picture.length());
+        		
+        	}
+        	attachment.setThumbFileGuid(thumbFileGuidString +"." + suffixString);
+        	//upload上阿里云
+          	metadata.setContentLength(attachment.getThumbFileSize());
+          	metadata.setContentType(attachment.getContentType());
+        	this.uploadFileToAliOss(thumbFileFinalRoute,  thumbFileGuidString +"." + suffixString,metadata);
+        	
+        	
+       	}else{
+        	//upload上阿里云
+          	metadata.setContentLength(attachment.getOriginFileSize());
+          	metadata.setContentType(attachment.getContentType());
+        	this.uploadFileToAliOss(originFileFinalRoute,  originFileGuidString +"." + suffixString,metadata);
+       	}
+       	
+       	
+        attachment = this.attachmentService.create(attachment);
+    	
+    	
+    	
+    	return attachment;
+    }
+    
+    
+    public boolean canCacheInClient(){
+    	return this.canCacheInClient;
+    }
+    
+	
+}

@@ -1,0 +1,73 @@
+package com.hongbao.boapp.serviceImpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.hongbao.boapp.attachmenthelper.IAttachmentHelper;
+import com.hongbao.boapp.base.DragonBaseService;
+import com.hongbao.boapp.businessobject.Attachment;
+import com.hongbao.boapp.dao.IAttachmentDao;
+import com.hongbao.boapp.exception.DragonBusinessException;
+import com.hongbao.boapp.service.IAttachmentService;
+
+
+@Service
+public class AttachmentServiceImpl extends DragonBaseService<Attachment> implements IAttachmentService {
+
+	@Autowired
+	private IAttachmentDao attachmentDao;
+	
+	@Autowired
+	private IAttachmentHelper attachmentHelper;
+	
+	public Attachment create(Attachment entity) throws DragonBusinessException{
+		super.create(entity);
+		
+		this.attachmentDao.create(entity);
+		return entity;
+	}
+
+
+	public Attachment update(Attachment entity) throws DragonBusinessException{
+		super.update(entity);
+		
+		this.attachmentDao.update(entity);
+		return entity;
+	}
+	
+	public Attachment get(Long id)throws DragonBusinessException{
+		
+		super.get(id);
+		
+		Attachment attachment = this.attachmentDao.get(id);
+		return attachment;
+		
+	}
+	
+	public void delete(Long id)throws DragonBusinessException{
+		
+		super.delete(id);
+		
+		this.attachmentDao.delete(id);
+	}
+
+
+	public String getFileUrlString(Long id,String type,String method) throws DragonBusinessException {
+		// TODO Auto-generated method stub
+		Attachment attachment = this.get(id);
+		String keyPath = "";
+		if(type == "origin"){
+			keyPath = attachment.getOriginFileGuid();
+		}else if(type == "medium"){
+			keyPath = attachment.getMediumFileGuid();
+		}else if(type == "thumb"){
+			keyPath = attachment.getThumbFileGuid();
+		}
+		return this.attachmentHelper.getFileUrlString(id,type,attachment.getContentType(),keyPath,method);
+
+	}
+
+
+	
+	
+}

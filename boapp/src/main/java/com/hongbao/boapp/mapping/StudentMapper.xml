@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hongbao.boapp.dao.IStudentDao">
+
+	<resultMap type="Student" id="studentResultMap">
+		<id column="id" property="id"/>
+		<result column="name" property="name"/>
+		<result column="score" property="score"/>
+		<result column="birth" property="birth" typeHandler="JodaDateTypeHandler"/>
+		<result column="createdAt" property="createdAt" typeHandler="JodaDateTimeTypeHandler"/>
+		<result column="updatedAt" property="updatedAt" typeHandler="JodaDateTimeTypeHandler"/>
+		<result column="gender" property="gender" typeHandler="GenderTypeHandler"/>
+		<result column="teacher_id" property="teacher_id"/>
+		<association property="teacher" column="teacher_id" javaType="Teacher" select="selectTeacher" fetchType="lazy"/>
+		<association property="author" column="id" javaType="Author" select="selectAuthor" fetchType="lazy"/>
+		<collection property="subjects" column="id" ofType="Subject" select="selectSubjects" fetchType="lazy"/>
+		<collection property="posts" column="{id=id,content=name}" ofType="Post" select="selectPosts" fetchType="lazy"/>
+	</resultMap>
+	
+	<resultMap id="studentNameMap" type="java.util.HashMap">
+		<result column="name" property="name"/>
+		<result column="id" property="id"/>
+	</resultMap>
+	
+	<sql id="BaseColumnList">
+		id,name,score,birth,createdAt,updatedAt,gender,teacher_id
+	</sql>
+	<sql id="AliasColumnList">
+		${alias}.id,${alias}.name,${alias}.score,${alias}.birth,${alias}.createdAt,${alias}.updatedAt,${alias}.gender,${alias}.teacher_id
+	</sql>
+	
+	<select id="selectPosts" resultMap="com.hongbao.boapp.dao.IPostDao.postResultMap">
+		<choose>
+			<when test="content.equals('123胡子龙1')">
+				select p.id,p.content from post p inner join student_post sp on sp.post_id = p.id where sp.student_id = #{id} and p.content = #{content}
+			</when>
+		 	<otherwise>
+				select p.id,p.content from post p inner join student_post sp on sp.post_id = p.id where sp.student_id = #{id}
+		    </otherwise>
+		</choose>
+
+
+	</select>
+	
+	<select id="selectSubjects" resultMap="com.hongbao.boapp.dao.ISubjectDao.subjectResultMap">
+		select * from subject where student_id = #{id}
+	</select>
+	
+	<select id="selectTeacher" resultMap="com.hongbao.boapp.dao.ITeacherDao.teacherResultMap">
+		select * from teacher where id = #{id}
+	</select>
+	<select id="selectAuthor" resultMap="com.hongbao.boapp.dao.IAuthorDao.authorResultMap">
+		select * from author where student_id = #{id}
+	</select>
+     <select id="get" parameterType="long" 
+         resultMap="studentResultMap">
+         select 
+         <include refid="BaseColumnList"/>
+         from student where id=#{id}
+     </select>
+     
+     <select id="findStudentLikeName" resultMap="studentResultMap">
+     	select 
+     	<include refid="BaseColumnList"/>
+     	 from student where name != ""
+     	<if test="!name.equals('')">
+     		and score >= 0
+     	</if>
+     </select>
+     
+     <select id="listStudentByName" resultMap="studentResultMap">
+     	select 
+     	<include refid="AliasColumnList"><property name="alias" value="s1"/></include>
+     	from student s1 where s1.name = #{name}
+     </select>
+     
+     <insert id="create"  parameterType="Student" useGeneratedKeys="true" keyProperty="id">
+     	insert into student (name,score,birth,createdAt,updatedAt,gender) values (#{name},#{score},#{birth,typeHandler=JodaDateTypeHandler},#{createdAt,typeHandler=JodaDateTimeTypeHandler}
+     	,#{updatedAt,typeHandler=JodaDateTimeTypeHandler},#{gender,typeHandler=GenderTypeHandler})
+     </insert>
+     <insert id="update"  parameterType="Student">
+     	update student set name=#{name},score=#{score},birth=#{birth,typeHandler=JodaDateTypeHandler},
+     	createdAt=#{createdAt,typeHandler=JodaDateTimeTypeHandler},updatedAt=#{updatedAt,typeHandler=JodaDateTimeTypeHandler},
+     	gender=#{gender,typeHandler=GenderTypeHandler} where id = #{id}
+     </insert>
+     
+     <select id="getSubjectCount" resultType="int">
+     	select count(1) from subject where student_id=#{student_id}
+     </select>
+     <select id="listNameByName" resultMap="studentNameMap">
+     	select id,name from student where name=#{name}
+     </select>
+     <delete id="delete" parameterType="long">
+     	delete from student where id = #{id}
+     </delete>
+     
+</mapper>

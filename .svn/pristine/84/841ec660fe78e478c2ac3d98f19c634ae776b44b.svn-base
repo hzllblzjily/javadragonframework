@@ -1,0 +1,11 @@
+driver=com.mysql.jdbc.Driver
+url=jdbc:mysql://localhost/test?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+username=root
+password=czj2015
+initialSize=10
+maxActive=100
+maxIdle=20
+minIdle=10
+maxWait=60000
+timeBetweenEvictionRunsMillis=3600000
+minEvictableIdleTimeMillis=3600000

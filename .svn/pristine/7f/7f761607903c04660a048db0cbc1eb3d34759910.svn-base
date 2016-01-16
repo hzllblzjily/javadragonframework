@@ -1,0 +1,28 @@
+@CHARSET "UTF-8";
+.other-item-container {
+	margin: 1rem 0;
+}
+.other-item {
+	color: #86d48d !important;
+	margin-bottom: 0.6rem;
+	display: inline-block;
+}
+.big-icon {
+	margin: 3rem 0 4.2rem;
+}
+.description-container {
+	color: #666666;
+	max-width: 480px;
+	margin: 0 auto 4rem;
+}
+.margin-right {
+	margin-right: 1.75rem;
+}
+.title {
+	margin-bottom: 1rem;
+}
+.login-tips{
+	color:red;
+	font-size:1rem;
+	margin-left:1rem;
+}

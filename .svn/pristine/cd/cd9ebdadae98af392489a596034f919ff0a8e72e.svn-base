@@ -1,0 +1,30 @@
+package com.hongbao.dragon.app;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.servlet.ModelAndView;
+
+import com.hongbao.boapp.context.DragonThreadContext;
+import com.hongbao.boapp.exception.DragonBusinessException;
+
+public class DragonRenderScriptBean {
+
+	@Autowired
+	private DragonThreadContext threadContext;
+	
+
+	
+	static final Logger log = Logger.getLogger(DragonRenderScriptBean.class);
+	
+    public ModelAndView renderScript(String path) throws DragonBusinessException{
+    	
+    	ModelAndView mv = new ModelAndView();
+    	mv.setViewName(path);
+//    	CurrentUserInfo currentUserInfo =  (CurrentUserInfo) this.threadContext.getBoFacade().getHttpSession().getAttribute(threadContext.currentUserSessionKey);
+//    	mv.addObject("currentUserInfo", currentUserInfo);
+//    	
+
+    	return mv;
+
+    }
+}

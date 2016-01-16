@@ -1,0 +1,285 @@
+package com.hongbao.boapp.serviceobject;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.hongbao.boapp.annotation.DragonSoPropertyType;
+import com.hongbao.boapp.annotation.DragonSoPropertyTypeEnum;
+import com.hongbao.boapp.base.DragonBaseServiceObject;
+import com.hongbao.boapp.exception.DragonBusinessException;
+import com.hongbao.boapp.service.IStudentService;
+import com.hongbao.dragonutil.enumeration.EmGender;
+import com.hongbao.dragonutil.jsonconverter.EmGenderJsonDeserializer;
+import com.hongbao.dragonutil.jsonconverter.EmGenderJsonSerializer;
+import com.hongbao.dragonutil.jsonconverter.JodaDateJsonDeserializer;
+import com.hongbao.dragonutil.jsonconverter.JodaDateJsonSerializer;
+import com.hongbao.dragonutil.jsonconverter.JodaDateTimeJsonDeserializer;
+import com.hongbao.dragonutil.jsonconverter.JodaDateTimeJsonSerializer;
+
+
+@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(value=Include.NON_NULL)
+public class StudentSo extends DragonBaseServiceObject{
+
+
+	@Autowired
+	@DragonSoPropertyType(type=DragonSoPropertyTypeEnum.TRANSIENT)
+	private IStudentService studentService;
+	
+	
+	public void processAggregation(String fieldName) throws DragonBusinessException{
+		if(fieldName.equals("hasSubject")){
+			int count = this.studentService.getSubjectCount(this.id);
+			if(count > 0){
+				this.hasSubject = true;
+			}else{
+				this.hasSubject = false;
+			}
+		}
+	}
+
+	private long id;
+	
+
+	private String name;
+	
+
+	@JsonSerialize(using = JodaDateJsonSerializer.class)
+	@JsonDeserialize(using = JodaDateJsonDeserializer.class)
+	private DateTime birth;
+	
+
+	@JsonSerialize(using = JodaDateTimeJsonSerializer.class)
+	@JsonDeserialize(using = JodaDateTimeJsonDeserializer.class)
+	private DateTime createdAt;
+	
+	@JsonSerialize(using = JodaDateTimeJsonSerializer.class)
+	@JsonDeserialize(using = JodaDateTimeJsonDeserializer.class)
+	private DateTime updatedAt;
+	
+	
+	private BigDecimal score;
+	
+
+	@JsonSerialize(using = EmGenderJsonSerializer.class)
+	@JsonDeserialize(using = EmGenderJsonDeserializer.class)
+	private EmGender gender;
+	
+
+	private int teacher_id;
+	
+	@DragonSoPropertyType(type=DragonSoPropertyTypeEnum.INNODE)
+	private TeacherSo teacher;
+	
+	@DragonSoPropertyType(type=DragonSoPropertyTypeEnum.INNODE)
+	private AuthorSo author;
+	
+	
+	@DragonSoPropertyType(type=DragonSoPropertyTypeEnum.SUBNODE)
+	private List<SubjectSo> subjects;
+	
+	@DragonSoPropertyType(type=DragonSoPropertyTypeEnum.SUBNODE)
+	private List<PostSo> posts;
+	
+	
+
+	@DragonSoPropertyType(type=DragonSoPropertyTypeEnum.AGGREGATION)
+	private boolean hasSubject;
+	
+
+	
+
+	
+	
+	public boolean isHasSubject() {
+		return hasSubject;
+	}
+
+
+
+
+	public void setHasSubject(boolean hasSubject) {
+		this.hasSubject = hasSubject;
+	}
+
+
+
+
+	public List<PostSo> getPosts() {
+		return posts;
+	}
+
+
+
+
+	public void setPosts(List<PostSo> posts) {
+		this.posts = posts;
+	}
+
+
+
+
+	public List<SubjectSo> getSubjects() {
+		return subjects;
+	}
+
+
+
+
+	public void setSubjects(List<SubjectSo> subjects) {
+		this.subjects = subjects;
+	}
+
+
+
+
+	public AuthorSo getAuthor() {
+		return author;
+	}
+
+
+
+
+	public void setAuthor(AuthorSo author) {
+		this.author = author;
+	}
+
+
+
+
+	public int getTeacher_id() {
+		return teacher_id;
+	}
+
+
+
+
+	public void setTeacher_id(int teacher_id) {
+		this.teacher_id = teacher_id;
+	}
+
+
+
+
+	public TeacherSo getTeacher() {
+		return teacher;
+	}
+
+
+
+
+	public void setTeacher(TeacherSo teacher) {
+		this.teacher = teacher;
+	}
+
+
+
+
+
+
+
+	public EmGender getGender() {
+		return gender;
+	}
+
+
+
+
+	public void setGender(EmGender gender) {
+		this.gender = gender;
+	}
+
+
+
+
+	public long getId() {
+		return id;
+	}
+
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+
+	public String getName() {
+		return name;
+	}
+
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+
+
+
+	public DateTime getBirth() {
+		return birth;
+	}
+
+
+
+
+	public void setBirth(DateTime birth) {
+		this.birth = birth;
+	}
+
+
+
+
+
+
+
+	public DateTime getCreatedAt() {
+		return createdAt;
+	}
+
+
+
+
+	public void setCreatedAt(DateTime createdAt) {
+		this.createdAt = createdAt;
+	}
+
+
+
+
+	public DateTime getUpdatedAt() {
+		return updatedAt;
+	}
+
+
+
+
+	public void setUpdatedAt(DateTime updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
+
+
+
+	public BigDecimal getScore() {
+		return score;
+	}
+
+
+	public void setScore(BigDecimal score) {
+		this.score = score;
+	}
+	
+	
+}

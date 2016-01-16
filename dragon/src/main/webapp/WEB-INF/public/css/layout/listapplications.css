@@ -1,0 +1,25 @@
+@CHARSET "UTF-8";
+.arrowLeft{
+	font-size:1.875rem;
+	line-height: 1.875rem;
+	color: #8a8a8a;
+	font-weight: 100;
+}
+.panel .panel-header .panel-title{
+	top: -2px;
+	left: 6px;
+	line-height: 1.8rem;
+}
+.panel .panel-body .row{
+	padding: 1.875rem;
+}
+.panel .panel-body .row h4{
+	margin-left: 4px;
+}
+.icon{
+	height: 4rem;
+	border-radius: 0.75rem;
+}
+.app-screenshot-count{
+	color: #ccc;
+}

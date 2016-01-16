@@ -1,0 +1,179 @@
+package com.hongbao.boapp.serviceobject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.hongbao.boapp.annotation.DragonSoPropertyType;
+import com.hongbao.boapp.annotation.DragonSoPropertyTypeEnum;
+import com.hongbao.boapp.base.DragonBaseServiceObject;
+import com.hongbao.boapp.constant.DragonConstant;
+import com.hongbao.boapp.exception.DragonBusinessException;
+import com.hongbao.boapp.service.IAttachmentService;
+
+
+@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(value=Include.NON_NULL)
+public class AttachmentSo extends DragonBaseServiceObject {
+
+	private Long id = 0L;
+	private Long imageWidth = 0L;
+	private Long imageHeight = 0L;
+	
+	@JsonIgnore
+	private String originFileGuid = "";
+	@JsonIgnore
+	private String mediumFileGuid = "";
+	@JsonIgnore
+	private String thumbFileGuid = "";
+	
+	private String contentType = "";
+	
+	
+
+
+
+	@DragonSoPropertyType(type=DragonSoPropertyTypeEnum.AGGREGATION)
+	private String originFileUrl = "";
+	
+	@DragonSoPropertyType(type=DragonSoPropertyTypeEnum.AGGREGATION)
+	private String mediumFileUrl = "";
+	
+	@DragonSoPropertyType(type=DragonSoPropertyTypeEnum.AGGREGATION)
+	private String thumbFileUrl = "";
+	
+	
+	@Autowired
+	@DragonSoPropertyType(type=DragonSoPropertyTypeEnum.TRANSIENT)
+	@JsonIgnore
+	private IAttachmentService attachmentService;
+
+	
+	@Override
+	public void processAggregation(String fieldName) throws DragonBusinessException{
+		if(fieldName.equals("originFileUrl")){
+			this.setOriginFileUrl(this.attachmentService.getFileUrlString(this.id, "origin",this.contentType,this.originFileGuid,DragonConstant.CONTENT_DEPOSITION_INLINE));
+		}else if(fieldName.equals("mediumFileUrl")){
+			this.setMediumFileUrl(this.attachmentService.getFileUrlString(this.id, "medium",this.contentType,this.mediumFileGuid,DragonConstant.CONTENT_DEPOSITION_INLINE));
+		}else if(fieldName.equals("thumbFileUrl")){
+			this.setThumbFileUrl(this.attachmentService.getFileUrlString(this.id, "thumb",this.contentType,this.thumbFileGuid,DragonConstant.CONTENT_DEPOSITION_INLINE));
+		}
+	}
+
+
+	public String getContentType() {
+		return contentType;
+	}
+
+
+
+	public void setContentType(String contentType) {
+		this.contentType = contentType;
+	}
+	
+	public String getOriginFileGuid() {
+		return originFileGuid;
+	}
+
+
+
+	public void setOriginFileGuid(String originFileGuid) {
+		this.originFileGuid = originFileGuid;
+	}
+
+
+
+	public String getMediumFileGuid() {
+		return mediumFileGuid;
+	}
+
+
+
+	public void setMediumFileGuid(String mediumFileGuid) {
+		this.mediumFileGuid = mediumFileGuid;
+	}
+
+
+
+	public String getThumbFileGuid() {
+		return thumbFileGuid;
+	}
+
+
+
+	public void setThumbFileGuid(String thumbFileGuid) {
+		this.thumbFileGuid = thumbFileGuid;
+	}
+
+
+
+	public Long getId() {
+		return id;
+	}
+
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+
+	public Long getImageWidth() {
+		return imageWidth;
+	}
+
+
+	public void setImageWidth(Long imageWidth) {
+		this.imageWidth = imageWidth;
+	}
+
+
+	public Long getImageHeight() {
+		return imageHeight;
+	}
+
+
+	public void setImageHeight(Long imageHeight) {
+		this.imageHeight = imageHeight;
+	}
+
+
+	public String getOriginFileUrl() {
+		return originFileUrl;
+	}
+
+
+	public void setOriginFileUrl(String originFileUrl) {
+		this.originFileUrl = originFileUrl;
+	}
+
+
+	public String getMediumFileUrl() {
+		return mediumFileUrl;
+	}
+
+
+	public void setMediumFileUrl(String mediumFileUrl) {
+		this.mediumFileUrl = mediumFileUrl;
+	}
+
+
+	public String getThumbFileUrl() {
+		return thumbFileUrl;
+	}
+
+
+	public void setThumbFileUrl(String thumbFileUrl) {
+		this.thumbFileUrl = thumbFileUrl;
+	}
+	
+	
+	
+	
+}

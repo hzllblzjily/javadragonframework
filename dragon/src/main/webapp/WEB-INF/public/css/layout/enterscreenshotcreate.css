@@ -1,0 +1,36 @@
+@CHARSET "UTF-8";
+/* ---ENTERSCREENSHOTCREATE--- */
+.mark-cell{
+	margin-right: 0.875rem;
+}
+#mark-container{
+	width: 36rem;
+}
+/* ---CHECKBOX--- */
+.check{
+	font-size:1.875rem;
+	line-height: 1.875rem;
+	color: #8a8a8a;
+	font-weight: 100;	
+}
+.checked{
+	font-size:1.875rem;
+	line-height: 1.875rem;
+	font-weight: 100;	
+}
+.check:hover,.checked:hover{
+	cursor: pointer;
+}
+
+.mark ~ .check{
+	display: inline-block;
+}
+.mark ~ .checked{
+	display: none;
+}
+.mark:checked ~ .check{
+	display: none;
+}
+.mark:checked ~ .checked{
+	display: inline-block;
+}

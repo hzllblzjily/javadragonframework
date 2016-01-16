@@ -1,0 +1,154 @@
+/*HEADER CSS*/
+/**--header--***/
+#header{
+	text-align: center;
+	vertical-align: middle;
+}
+#header .container{
+	margin: 0 auto;
+	width: 64rem;
+}
+/*searchBox*/
+.searchBox{
+	padding-top: 1.0625rem;
+	padding-bottom: 1.0625rem;
+}
+
+.search-area{
+	border-radius: 4px;
+	padding-left: 0.625rem;
+}
+.searchBox .column{
+	position: relative;
+}
+.search-icon{
+	position: absolute;
+	right: 1rem;
+	padding: 0.375rem 0.6875rem;
+	font-size:2.375rem;
+	line-height: 2.375rem;
+	color: #fff;
+	border-radius: 0 4px 4px 0;
+}
+.search-icon:hover{
+	cursor: pointer;
+}
+
+/*logo*/
+.logo{
+	padding-top: 1.5rem;
+	padding-bottom: 1.5rem;
+}
+.logo-img{
+	width: 2.25rem;
+	height: 2.25rem;
+}
+.logo-name{
+	position: relative;
+	top: 0;
+	line-height: 2.25rem;
+}
+/*login*/
+.logout-area{
+	height: 5.25rem;
+	line-height: 5.25rem;
+	text-align: center;
+	margin-left: 1.625rem;
+	font-size: 1.125rem;
+}
+.logout-area a:link,
+.logout-area a:visited,
+.logout-area a:hover,
+.logout-area a:active{
+	color: #87d484;
+}
+.login-area{
+	position:relative;
+	overflow:hidden;
+	width: 3.25rem;
+	height: 3.25rem;
+	margin:1rem 0 1rem 3.25rem;
+	border-radius: 1.625rem;
+}
+.login-area img{
+	position:absolute;
+	left:0;
+	top:0;
+}
+.faq{
+	height: 5.25rem;
+	line-height: 5.25rem;
+	font-size: 0.875rem;
+}
+.faq a:link,.faq a:visited,.faq a:active{
+	color: #666;
+}
+.faq a:hover{
+	color: #86d48d;
+}
+
+.login li:hover{
+	cursor: pointer;
+}
+.login li:first-child{
+	position: relative;
+}
+/***main-menu***/
+.main-menu{
+	position: absolute;
+	top: 5.25rem;
+	right: 0rem;
+	width: 12.5rem;
+	line-height: 2.625rem;
+	background: #fff;
+	z-index: 1000;
+	-webkit-box-shadow:0 0 10px rgba(0,0,0,.15);
+	-moz-box-shadow:0 0 10px rgba(0,0,0,.15);
+	-ms-box-shadow:0 0 10px rgba(0,0,0,.15);
+	box-shadow: 0 0 10px rgba(0,0,0,.15);
+}
+.main-menu:before{
+	position: absolute;
+	top: -0.5rem;
+	right: 1rem;
+	content: '';
+	height: 0;
+	width: 0;
+	z-index: 1002;
+	border-bottom: 0.5rem solid #fff;
+	border-left: 0.5rem solid transparent;
+	border-right: 0.5rem solid transparent;
+}
+.main-menu:after{
+	position: absolute;
+	top: -0.55rem;
+	right: 1rem;
+	content: '';
+	height: 0;
+	width: 0;
+	z-index: 1001;
+	border-bottom: 0.55rem solid #eee;
+	border-left: 0.55rem solid transparent;
+	border-right: 0.55rem solid transparent;
+}
+.main-menu li a{
+	display: inline-block;
+	margin-left: 3.25rem;
+	height: 100%;
+	width: 100%;
+	font-size: 0.875rem;
+}
+.main-menu li:hover a{
+	color:#fff;
+}
+.main-menu li:hover{
+	cursor: pointer;
+	background: #86d48d;
+}
+.login li:first-child:hover h5.is-hidden ~ ul{
+	display: block;
+}
+/*vertical-align*/
+.fa-search,.logo-name,.logo-img,.faq,.login-area,.logout-area{
+	vertical-align: top;
+}

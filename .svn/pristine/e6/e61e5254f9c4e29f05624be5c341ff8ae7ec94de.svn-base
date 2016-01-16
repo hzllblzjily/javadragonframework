@@ -1,0 +1,198 @@
+@CHARSET "UTF-8";
+/* app信息 */
+.info-block{
+	height: 9.5rem;
+}
+.app-icon{
+	width: 6.25rem;
+	border-radius: 1.25rem;
+}
+.subscribe-btn{
+	border-radius: 0.125rem;
+	background-color: #5dd7e6;
+	padding: 0.375rem 0.75rem;
+	margin-left: 0.5rem;
+	cursor: pointer;
+}
+.subscribe-btn:hover{
+	background-color: #57c8d6;
+}
+.unsubscribe-btn{
+	border-radius: 0.125rem;
+	background-color: #ff6767;
+	padding: 0.25rem 0.75rem;
+	margin-left: 0.5rem;
+	cursor: pointer;
+}
+.btn-group{
+	margin-top: 1.25rem;
+	overflow: hidden;
+}
+.download-btn{
+	background-color: #86d48d;
+	height: 3.125rem;
+	width: 13rem;
+	line-height: 3.125rem;
+	border-radius: 0.25rem;
+	float: left;
+}
+.advanced-btn-container{
+	float:right;
+}
+.advanced-btn-container li{
+	float:left;
+}
+
+#editApp-btn-groups li:first-of-type > .app-btn{
+	border-radius:0.25rem 0 0 0.25rem;
+}
+#editApp-btn-groups li:last-of-type > .app-btn{
+	border-radius:0 0.25rem 0.25rem 0;
+}
+.app-btn{
+	height: 3.125rem;
+	width: 8rem;
+	line-height: 3.125rem;
+}
+.edit-info-btn{
+	background-color: #f4cb5b;
+}
+.upload-btn{
+	background-color: #f6b05d;
+}
+.subscribe-users-btn{
+	background-color: #f6935d;
+}
+.delete-btn{
+	background-color: #ff6767;
+}
+.download-btn:hover{
+	background-color: #70b176;
+}
+.edit-info-btn:hover{
+	background-color: #e7c056;
+}
+.upload-btn:hover{
+	background-color: #e0a054;
+}
+.subscribe-users-btn:hover{
+	background-color: #e18655;
+}
+.delete-btn:hover{
+	background-color: #e05a5b;
+}
+/* 截图 */
+.shot{
+	position:relative;
+}
+.shot-container{
+	margin-top: 2rem;
+}
+.shot-image {
+	width:90%;
+	height:0;
+	padding-bottom:158.3%;
+	position:relative;
+	cursor:pointer;
+	overflow:hidden;
+	border:1px solid #eee;
+	-webkit-transition: all .3s;
+	transition: all .3s;
+}
+.shot-image-hover{
+	-webkit-transform:scale(1.05);
+	transform:scale(1.05);
+/* 	-webkit-box-shadow:0 0 10px rgba(0,0,0,.4);
+	box-shadow:0 0 10px rgba(0,0,0,.4); */
+}
+.shot-image img{
+	width: 100%;
+	-webkit-transition: all .3s;
+	transition: all .3s;
+}
+.shot-image .cover{
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 100%;
+	left: 0;
+	background:rgba(256,256,256,0.3);
+	-webkit-transition: all .3s;
+	transition: all .3s;
+}
+.shot-image .cover-hover{
+	-webkit-transform: translateY(-100%);
+	transform: translateY(-100%);
+}
+.actions{
+	position: absolute;
+	z-index: 99;
+	right:110%;
+	top:0.75rem;
+	-webkit-transition: all .3s;
+	transition: all .3s;
+}
+.actions-hover{
+	right: 0.75rem;
+}
+.unlike,.liked{
+	font-size:1.4rem;
+	line-height: 2.25rem;
+	color: #fe4435;
+	font-weight: 100;	
+}
+.like-count{
+	font-size: 0.875rem;
+	line-height: 0.875rem;
+	color: #cfcfcf;
+	font-weight:100;
+}
+
+.btn-like:link,
+.btn-like:visited,
+.btn-like:hover,
+.btn-like:active{
+	color:#4c4c4c;
+}
+.shot-info{
+	width: 90%;
+	margin: 0.75rem 0 1.25rem;
+	height: 3rem;
+}
+.shot-info .third h6{
+	display: inline-block;
+	margin-left: 0.35rem;
+	margin-top: 1px;
+	position: relative;
+	top: 2px;
+	color: #ff5656;
+}
+.mark-container{
+	margin-top: 0.5rem;
+}
+.mark-container a{
+	color: #acacac;
+}
+.mark-container a:hover{
+	cursor:pointer;
+	text-decoration: underline !important;
+}
+.loadMore{
+	background:#f9f9f9;
+	width:96.7%;
+}
+.loadMore:hover{
+	background:#eee;
+}
+.loadTips{
+	position:fixed;
+	top:50%;
+	left:50%;
+	width:15rem;
+	height:5rem;
+	line-height:5rem;
+	margin-top:-2.5rem;
+	margin-left:-7.5rem;
+	background:rgba(0,0,0,0.8);
+	z-index:1500;
+}

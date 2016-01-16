@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hongbao.boapp.dao.IUserDao">
+
+	<resultMap type="User" id="userResultMap">
+		<id column="id" property="id"/>
+		<result column="avatar_id" property="avatar_id"/>
+		<result column="userName" property="userName"/>
+		<result column="email" property="email"/>
+		<result column="createdAt" property="createdAt" typeHandler="JodaDateTimeTypeHandler"/>
+		<result column="updatedAt" property="updatedAt" typeHandler="JodaDateTimeTypeHandler"/>
+		<result column="forgetPasswdIdentifier" property="forgetPasswdIdentifier"/>
+		<result column="password" property="password"/>
+		<result column="resetPasswdInvalidTime" property="resetPasswdInvalidTime" typeHandler="JodaDateTimeTypeHandler"/>
+		<result column="wechatOpenId" property="wechatOpenId"/>
+		<result column="wechatAccessToken" property="wechatAccessToken"/>
+		<result column="wechatUnionId" property="wechatUnionId"/>
+		<result column="wechatRefreshToken" property="wechatRefreshToken"/>
+		<result column="cookieToken" property="cookieToken"/>
+		<result column="token" property="token"/>
+		<association property="avatar" column="avatar_id" javaType="Attachment" select="selectAvatar" fetchType="lazy"/>
+	</resultMap>
+	
+	
+	<sql id="BaseColumnList">
+		id,avatar_id,userName,email,password,createdAt,updatedAt,forgetPasswdIdentifier,
+		resetPasswdInvalidTime,wechatOpenId,wechatAccessToken,wechatUnionId,wechatRefreshToken,cookieToken,token
+	</sql>
+	
+	<select id="selectAvatar" resultMap="com.hongbao.boapp.dao.IAttachmentDao.attachmentResultMap">
+		select <include refid="com.hongbao.boapp.dao.IAttachmentDao.BaseColumnList"/> from attachment where id = #{id}
+	</select>
+	
+	<select id="getUserByEmailAndCookieToken" resultMap="userResultMap">
+		select <include refid="BaseColumnList"/> from user where email = #{email} and cookieToken = #{cookieToken}
+	</select>
+	<select id="getUserByEmail" resultMap="userResultMap">
+		select <include refid="BaseColumnList"/> from user where email = #{email}
+		<if test="isLock">
+			for update
+		</if>	
+	</select>
+	<select id="countUserByCookieToken" resultType="int">
+		select count(1) from user where cookieToken = #{cookieToken}
+		<if test="excludeUserId != null">
+			and id != #{excludeUserId}
+		</if>
+		<if test="isLock">
+			for update
+		</if>		
+	</select>
+     <select id="get" parameterType="long" 
+         resultMap="userResultMap">
+         select 
+         <include refid="BaseColumnList"/>
+         from user where id=#{id}
+     </select>
+     
+     
+     <insert id="create"  parameterType="User" useGeneratedKeys="true" keyProperty="id">
+     	insert into user (avatar_id,userName,email,createdAt,updatedAt,password,forgetPasswdIdentifier,
+		resetPasswdInvalidTime,wechatOpenId,wechatAccessToken,wechatUnionId,wechatRefreshToken,cookieToken,token) values (#{avatar_id},#{userName},#{email},#{createdAt,typeHandler=JodaDateTimeTypeHandler}
+     	,#{updatedAt,typeHandler=JodaDateTimeTypeHandler},#{password},#{forgetPasswdIdentifier},#{resetPasswdInvalidTime,typeHandler=JodaDateTimeTypeHandler},#{wechatOpenId}
+     	,#{wechatAccessToken},#{wechatUnionId},#{wechatRefreshToken},#{cookieToken},#{token})
+     </insert>
+     <insert id="update"  parameterType="User">
+     	update user set avatar_id=#{avatar_id},userName=#{userName},email=#{email},
+     	createdAt=#{createdAt,typeHandler=JodaDateTimeTypeHandler},updatedAt=#{updatedAt,typeHandler=JodaDateTimeTypeHandler},
+     	password=#{password},forgetPasswdIdentifier=#{forgetPasswdIdentifier},resetPasswdInvalidTime=#{resetPasswdInvalidTime,typeHandler=JodaDateTimeTypeHandler},wechatOpenId=#{wechatOpenId},
+     	wechatAccessToken=#{wechatAccessToken},wechatUnionId=#{wechatUnionId},wechatRefreshToken=#{wechatRefreshToken},cookieToken=#{cookieToken},
+     	token=#{token} where id = #{id}
+     </insert>
+     
+     <delete id="delete" parameterType="long">
+     	delete from user where id = #{id}
+     </delete>
+     
+</mapper>

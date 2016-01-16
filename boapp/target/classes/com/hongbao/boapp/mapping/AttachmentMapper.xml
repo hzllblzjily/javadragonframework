@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hongbao.boapp.dao.IAttachmentDao">
+
+	<resultMap type="Attachment" id="attachmentResultMap">
+		<id column="id" property="id"/>
+		<result column="originFileSize" property="originFileSize"/>
+		<result column="mediumFileSize" property="mediumFileSize"/>
+		<result column="thumbFileSize" property="thumbFileSize"/>
+		<result column="createdAt" property="createdAt" typeHandler="JodaDateTimeTypeHandler"/>
+		<result column="updatedAt" property="updatedAt" typeHandler="JodaDateTimeTypeHandler"/>
+		<result column="fileName" property="fileName"/>
+		<result column="contentType" property="contentType"/>
+		<result column="modelId" property="modelId"/>
+		<result column="modelName" property="modelName"/>
+		<result column="modelColumn" property="modelColumn"/>
+		<result column="imageWidth" property="imageWidth"/>
+		<result column="imageHeight" property="imageHeight"/>
+		<result column="originFileGuid" property="originFileGuid"/>
+		<result column="mediumFileGuid" property="mediumFileGuid"/>
+		<result column="thumbFileGuid" property="thumbFileGuid"/>
+		<result column="dataFileCacheRoute" property="dataFileCacheRoute"/>
+	</resultMap>
+	
+	
+	<sql id="BaseColumnList">
+		id,originFileSize,mediumFileSize,thumbFileSize,createdAt,updatedAt,fileName,contentType,
+		modelId,modelName,modelColumn,imageWidth,imageHeight,originFileGuid,mediumFileGuid,thumbFileGuid,dataFileCacheRoute
+	</sql>
+	
+	
+     <select id="get" parameterType="long" 
+         resultMap="attachmentResultMap">
+         select 
+         <include refid="BaseColumnList"/>
+         from attachment where id=#{id}
+     </select>
+     
+     
+     <insert id="create"  parameterType="Attachment" useGeneratedKeys="true" keyProperty="id">
+     	insert into attachment (originFileSize,mediumFileSize,thumbFileSize,createdAt,updatedAt,fileName,contentType,
+		modelId,modelName,modelColumn,imageWidth,imageHeight,originFileGuid,mediumFileGuid,thumbFileGuid,dataFileCacheRoute) values (#{originFileSize},#{mediumFileSize},#{thumbFileSize},#{createdAt,typeHandler=JodaDateTimeTypeHandler}
+     	,#{updatedAt,typeHandler=JodaDateTimeTypeHandler},#{fileName},#{contentType},#{modelId},#{modelName}
+     	,#{modelColumn},#{imageWidth},#{imageHeight},#{originFileGuid},#{mediumFileGuid},#{thumbFileGuid},#{dataFileCacheRoute})
+     </insert>
+     <insert id="update"  parameterType="Attachment">
+     	update attachment set originFileSize=#{originFileSize},mediumFileSize=#{mediumFileSize},thumbFileSize=#{thumbFileSize},
+     	createdAt=#{createdAt,typeHandler=JodaDateTimeTypeHandler},updatedAt=#{updatedAt,typeHandler=JodaDateTimeTypeHandler},
+     	fileName=#{fileName},contentType=#{contentType},modelId=#{modelId},modelName=#{modelName},
+     	modelColumn=#{modelColumn},imageWidth=#{imageWidth},imageHeight=#{imageHeight},originFileGuid=#{originFileGuid},
+     	mediumFileGuid=#{mediumFileGuid},thumbFileGuid=#{thumbFileGuid},dataFileCacheRoute=#{dataFileCacheRoute} where id = #{id}
+     </insert>
+     
+     <delete id="delete" parameterType="long">
+     	delete from attachment where id = #{id}
+     </delete>
+     
+</mapper>

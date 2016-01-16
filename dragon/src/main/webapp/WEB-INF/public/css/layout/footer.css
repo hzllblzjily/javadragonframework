@@ -1,0 +1,48 @@
+@CHARSET "UTF-8";
+/**--footer--**/
+.footer{
+	background-color: #332e35;
+	margin-top: 4rem;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+}
+.subtitle{
+	margin: 0.625rem 0 2rem;
+}
+.subscribe-btn-container{
+	margin-bottom: 2rem;
+}
+.subscribe-input-btn{
+	padding: 0.5rem 0.75rem;
+	font-size: 0.875rem;
+	border-radius: 3px;
+	margin-left: 0.5rem;
+}
+.subscribe-input-btn:hover{
+	background-color: #70b176;
+}
+.mb10{
+	margin-bottom:0.625rem;
+}
+.footer-detail-info{
+	width: 65%;
+	margin: 0 auto;
+}
+.footer-highlight{
+	color: #7eef76 !important;
+}
+.footer-highlight:hover{
+	color: #5cc651 !important;
+}
+.back-btn{
+	position:fixed;
+	right:1rem;
+	bottom:1rem;
+	padding:0.5rem;
+	cursor:pointer;
+}
+.back_to_top{
+	color:#fff;
+}

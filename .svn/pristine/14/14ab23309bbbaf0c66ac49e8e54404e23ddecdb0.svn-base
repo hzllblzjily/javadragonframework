@@ -1,0 +1,26 @@
+@CHARSET "UTF-8";
+/***--ENTERROLELIST--***/
+#form-add-administator .modal-body{
+	padding-top: 5rem;
+}
+#form-add-administator .input-area{
+	border: 1px solid #cbcbcb;
+	background: #FAFAF7;
+}
+.form-group{
+	float: none;
+	width: 27.75rem;
+	margin: 0 auto;
+}
+.form-group label{
+	display: inline-block;
+	font-size: 1rem;
+	margin-bottom: 0.75rem;
+}
+.mb28{
+	margin-bottom: 1.75rem;
+}
+.help-block{
+	top:60%;
+}
+
